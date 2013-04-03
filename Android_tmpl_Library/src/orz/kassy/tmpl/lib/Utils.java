@@ -2,7 +2,6 @@ package orz.kassy.tmpl.lib;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +15,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences.Editor;
@@ -25,6 +23,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory.Options;
+import android.media.MediaScannerConnection;
 import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.util.Log;
@@ -178,6 +177,12 @@ public class Utils {
 	}
 	
 	
+	/**
+	 * SDカードにコピー
+	 * @param context
+	 * @param dbName
+	 * @throws IOException
+	 */
     public static void sdCopy(Context context, String dbName) throws IOException{
         //保存先(SDカード)のディレクトリを確保
         String pathSd = new StringBuilder()
@@ -358,27 +363,51 @@ public class Utils {
         InputStream input = null;
         input = new FileInputStream(srcFile);
         input.read(bin);
-        
+        input.close();
     }
 
 
     /**
      * ビットマップを任意の名前で保存する
-     * @param mBitmap ビットマップ
+     * @param bitmap ビットマップ
      * @param dirPath ディレクトリのパス　/sdcard/以下のみ、最後の/は無し推奨、null可（直下保存）
      * @param fileName ファイル名
      * @throws IOException 
      */
-    public static void saveBitmapAsJpgAtSd(Bitmap mBitmap, String dirPath, String fileName) throws IOException {
+    public static void saveBitmapAsJpgAtSd(Bitmap bitmap, String dirPath, String fileName) throws IOException {
         String fullPath = Environment.getExternalStorageDirectory().toString() + "/" + dirPath +"/"+ fileName;
         FileOutputStream fos = null;
         File file = new File(fullPath);
         file.getParentFile().mkdirs(); // ディレクトリを作る　mkdirsは再帰的に作ることが可能
         fos = new FileOutputStream(file);
-        mBitmap.compress(CompressFormat.JPEG, 100, fos);
+        bitmap.compress(CompressFormat.JPEG, 100, fos);
         fos.close();
     }
 
+    /**
+     * ビットマップを任意の名前で保存する、そしてすぐMediaScanしてギャラリーに登録する
+     * @param con
+     * @param bitmap
+     * @param dirPath
+     * @param fileName
+     * @throws IOException
+     */
+    public static void saveBitmapAsJpgAtSdAndMediaScan(Context con, Bitmap bitmap, String dirPath, String fileName) throws IOException{
+        String fullPath = Environment.getExternalStorageDirectory().toString() + "/" + dirPath +"/"+ fileName;
+        FileOutputStream fos = null;
+        File file = new File(fullPath);
+        file.getParentFile().mkdirs(); // ディレクトリを作る　mkdirsは再帰的に作ることが可能
+        fos = new FileOutputStream(file);
+        bitmap.compress(CompressFormat.JPEG, 100, fos);
+        fos.close();
+        String[] paths = {fullPath};
+        String[] mimeTypes = {"image/jpeg"};
+        MediaScannerConnection.scanFile(con,
+                                        paths,
+                                        mimeTypes,
+                                        null);
+    }
+    
     /**
      * ビットマップを任意の名前で保存する
      * @param mBitmap ビットマップ
